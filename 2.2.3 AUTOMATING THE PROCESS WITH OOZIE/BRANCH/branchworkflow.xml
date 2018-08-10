@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow-app xmlns="uri:oozie:workflow:0.2" name="branchone">
+    <start to="branchjob"/>    
+    
+    <action name="branchjob">
+        <sqoop xmlns="uri:oozie:sqoop-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+              <delete path="${nameNode}/user/maria_dev/Credit_Card_System/CDW_SAPP_D_BRANCH"/>
+            </prepare>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <command>job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec branchJob</command>		 		
+	    
+	    <archive>/user/maria_dev/lib/java-json.jar#java-json.jar</archive>
+        </sqoop>
+        <ok to="CREATE_EXTERNAL_TABLE_CDW_SAPP_D_BRANCH_ONE"/>
+        <error to="fail"/>
+    </action>
+
+   <action name = "CREATE_EXTERNAL_TABLE_CDW_SAPP_D_BRANCH_ONE">
+      <hive xmlns = "uri:oozie:hive-action:0.4">
+         <job-tracker>${jobTracker}</job-tracker>
+         <name-node>${nameNode}</name-node>
+         <script>${nameNode}/user/maria_dev/Credit_Card_System/CDW_SAPP_D_BRANCH_TWO/externalbranch.Hive</script>
+      </hive>
+		
+      <ok to = "CREATE_EXTERNAL_TABLE_CDW_SAPP_D_BRANCH" />
+      <error to = "kill_job" />
+   </action>
+   
+   <action name = "CREATE_EXTERNAL_TABLE_CDW_SAPP_D_BRANCH">
+      <hive xmlns = "uri:oozie:hive-action:0.4">
+        <job-tracker>${jobTracker}</job-tracker>
+         <name-node>${nameNode}</name-node>
+
+         <script>${nameNode}/user/maria_dev/Credit_Card_System/CDW_SAPP_D_BRANCH_TWO/branch.Hive</script>
+      </hive>
+		
+      <ok to = "Insert_into_Branch" />
+      <error to = "kill_job" />
+   </action>
+   
+   <action name = "Insert_into_Branch">
+      <hive xmlns = "uri:oozie:hive-action:0.4">
+         <job-tracker>${jobTracker}</job-tracker>
+         <name-node>${nameNode}</name-node>
+
+         <script>${nameNode}/user/maria_dev/Credit_Card_System/CDW_SAPP_D_BRANCH_TWO/Branchdata.Hql</script>
+        
+      </hive>
+
+ <ok to = "end" />
+ <error to = "kill_job" />
+</action>
+<kill name = "fail">
+      <message>Job failed</message>
+   </kill>
+   
+   <kill name = "kill_job">
+      <message>Job failed</message>
+   </kill>
+	
+   <end name = "end" />
+</workflow-app>
+

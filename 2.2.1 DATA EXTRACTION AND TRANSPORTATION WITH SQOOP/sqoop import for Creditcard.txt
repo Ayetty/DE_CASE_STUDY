@@ -1,0 +1,11 @@
+sqoop import 
+--connect jdbc:mysql://localhost/CDW_SAPP  --driver com.mysql.jdbc.Driver  -m 1
+--query "SELECT CREDIT_CARD_NO,
+date_format(str_to_date(concat_ws('/', CC.year, CC.month, CC.day), '%Y/%c/%e'), '%y/%m/%d') as TIMEID,
+CUST_SSN,
+BRANCH_CODE,
+TRANSACTION_TYPE,
+TRANSACTION_VALUE,
+TRANSACTION_ID from CDW_SAPP_CREDITCARD CC WHERE\$CONDITIONS" 
+--split-by BRANCH_CODE 
+--target-dir /user/maria_dev/Credit_Card_System/CDW_SAPP_F_CREDIT_CARD

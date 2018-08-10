@@ -1,0 +1,15 @@
+sqoop job 
+--meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop 
+--create timeJob
+-- import 
+--connect jdbc:mysql://localhost/CDW_SAPP 
+--driver com.mysql.jdbc.Driver 
+--query 
+"SELECT date_format(str_to_date(concat_ws('/', year, month, day), '%Y/%c/%e'), '%y/%m/%d') as TIMEID,
+DAY,
+MONTH,
+QUARTER(str_to_date(month, '%m')) as QTR,
+YEAR from CDW_SAPP_CREDITCARD WHERE\$CONDITIONS"
+--delete-target-dir 
+--target-dir /user/maria_dev/Credit_Card_System/CDW_SAPP_D_TIME/
+-m1

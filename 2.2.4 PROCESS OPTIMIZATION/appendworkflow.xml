@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow-app xmlns="uri:oozie:workflow:0.2" name="Optimizing the Process">
+   	<start to="sqoopcustomer"/>
+            
+    <action name="sqoopcustomer">
+        <sqoop xmlns="uri:oozie:sqoop-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${nameNode}/user/maria_dev/Credit_Card_System/CDW_SAPP_A_CUSTOMER/"/>
+            </prepare>
+            <command>
+                job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec customerappendJob
+            </command>		 		
+	  <archive>/user/maria_dev/lib/java-json.jar#java-json.jar</archive>
+        </sqoop>
+        <ok to="INSERT_INTO_CUSTOMER" />
+        <error to="fail"/>
+    </action>
+
+	<kill name="fail">
+        <message> Workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+
+   <action name = "INSERT_INTO_Table_CUSTOMER">
+      <hive xmlns = "uri:oozie:hive-action:0.4">
+         <job-tracker>${jobTracker}</job-tracker>
+         <name-node>${nameNode}</name-node>
+
+         <script>${nameNode}/user/maria_dev/Credit_Card_System/Oozie/copy_Customerdata.Hql</script>
+
+      </hive>
+        <ok to = "sqoopbranch" />
+        <error to = "fail"/>
+   </action>
+   
+   <action name="sqoopbranch">
+        <sqoop xmlns="uri:oozie:sqoop-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${nameNode}/user/maria_dev/Credit_Card_System/CDW_SAPP_A_BRANCH/"/>
+            </prepare>
+            <command>
+                job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec branchappendJob
+            </command>
+	 <archive>/user/maria_dev/lib/java-json.jar#java-json.jar</archive>
+        </sqoop>
+	<ok to = "INSERT_INTO_BRANCH" />
+      <error to = "fail"/>
+   </action>
+
+  
+      
+   <action name = "INSERT_INTO_BRANCH">
+      <hive xmlns = "uri:oozie:hive-action:0.4">
+         <job-tracker>${jobTracker}</job-tracker>
+         <name-node>${nameNode}</name-node>
+
+         <script>${nameNode}/user/maria_dev/Credit_Card_System/Oozie/copy_Branchdata.Hql</script>
+        
+      </hive>
+        <ok to="sqoopcreditcard"/>
+        <error to="fail"/>
+    </action>
+    <action name="sqoopcreditcard">
+        <sqoop xmlns="uri:oozie:sqoop-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${nameNode}/user/maria_dev/Credit_Card_System/CDW_SAPP_A_CREDIT_CARD/"/>
+            </prepare>
+            <command>
+                job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec creditcardappendJob
+            </command>
+	 <archive>/user/maria_dev/lib/java-json.jar#java-json.jar</archive>
+        </sqoop>
+	<ok to = "INSERT_INTO_CREDIT_CARD" />
+      <error to = "fail"/>
+   </action>
+
+  
+      
+   <action name = "INSERT_INTO_CREDIT_CARD">
+      <hive xmlns = "uri:oozie:hive-action:0.4">
+         <job-tracker>${jobTracker}</job-tracker>
+         <name-node>${nameNode}</name-node>
+
+         <script>${nameNode}/user/maria_dev/Credit_Card_System/Oozie/copy_Creditcarddata.Hql</script>
+        
+      </hive>
+        <ok to="sqooptime"/>
+        <error to="fail"/>
+    </action>
+    <action name="sqooptime">
+        <sqoop xmlns="uri:oozie:sqoop-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${nameNode}/user/maria_dev/Credit_Card_System/CDW_SAPP_A_TIME/"/>
+            </prepare>
+            <command>
+               job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec timeappendJob
+            </command>
+	 <archive>/user/maria_dev/lib/java-json.jar#java-json.jar</archive>	
+        </sqoop>
+	<ok to = "INSERT_INTO_TIME" />
+      <error to = "kill_job" />
+   </action>
+
+  
+      
+   <action name = "INSERT_INTO_TIME">
+      <hive xmlns = "uri:oozie:hive-action:0.4">
+         <job-tracker>${jobTracker}</job-tracker>
+         <name-node>${nameNode}</name-node>
+
+         <script>${nameNode}/user/maria_dev/Credit_Card_System/Oozie/copy_Timedata.Hql</script>
+        
+      </hive>
+        <ok to="end"/>
+        <error to="kill_job"/>
+    </action>
+   <kill name = "kill_job">
+      <message>Job failed</message>
+   </kill>
+    <end name="end"/>
+</workflow-app>
